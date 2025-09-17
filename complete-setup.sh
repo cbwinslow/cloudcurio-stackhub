@@ -46,6 +46,11 @@ else
     ssh-add ~/.ssh/id_rsa
 fi
 
+# Ensure SSH key has correct permissions
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/id_ed25519
+chmod 644 ~/.ssh/id_ed25519.pub
+
 # Display public key for user to add to both GitHub and GitLab
 echo ""
 echo "=== Add this SSH key to your GitHub and GitLab accounts ==="
