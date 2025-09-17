@@ -2,7 +2,7 @@ import { D1Database, AnalyticsEngineDataset } from '@cloudflare/workers-types';
 
 interface Env {
   DB: D1Database;
-  ANALYTICS: AnalyticsEngineDataset;
+  ANALYTICS_ENGINE: AnalyticsEngineDataset;
 }
 
 interface ScriptItem {
@@ -48,7 +48,7 @@ export default {
 
     // Send analytics data to Analytics Engine
     try {
-      env.ANALYTICS.writeDataPoint({
+      env.ANALYTICS_ENGINE.writeDataPoint({
         blobs: [analyticsData.method, analyticsData.path, analyticsData.userAgent, analyticsData.referer, analyticsData.ip],
         doubles: [analyticsData.timestamp],
         indexes: [analyticsData.path],
@@ -112,7 +112,7 @@ export default {
 
         // Record analytics for item creation
         try {
-          env.ANALYTICS.writeDataPoint({
+          env.ANALYTICS_ENGINE.writeDataPoint({
             blobs: ['item_created', data.category, data.name],
             doubles: [Date.now()],
             indexes: [data.category],
@@ -154,7 +154,7 @@ export default {
 
         // Record analytics for item update
         try {
-          env.ANALYTICS.writeDataPoint({
+          env.ANALYTICS_ENGINE.writeDataPoint({
             blobs: ['item_updated', data.category, data.name],
             doubles: [Date.now()],
             indexes: [data.category],
@@ -186,7 +186,7 @@ export default {
         // Record analytics for item deletion
         if (item) {
           try {
-            env.ANALYTICS.writeDataPoint({
+            env.ANALYTICS_ENGINE.writeDataPoint({
               blobs: ['item_deleted', item.category, item.name],
               doubles: [Date.now()],
               indexes: [item.category],
@@ -205,7 +205,7 @@ export default {
         
         // Record analytics for export
         try {
-          env.ANALYTICS.writeDataPoint({
+          env.ANALYTICS_ENGINE.writeDataPoint({
             blobs: ['export', format, items.length.toString()],
             doubles: [Date.now(), items.length],
             indexes: [format],
@@ -290,7 +290,7 @@ export default {
       
       // Record error analytics
       try {
-        env.ANALYTICS.writeDataPoint({
+        env.ANALYTICS_ENGINE.writeDataPoint({
           blobs: ['error', error.message || 'Unknown error', path, method],
           doubles: [Date.now()],
           indexes: ['error'],
