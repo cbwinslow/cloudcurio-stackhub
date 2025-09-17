@@ -86,6 +86,7 @@ echo "Available Scripts:"
 echo "================"
 echo "./test-local.sh          - Test the application locally"
 echo "./setup-api-token.sh     - Set up a new API token"
+echo "./deploy-worker.sh       - Deploy the Worker with all services"
 echo "./complete-setup.sh      - Guided setup process"
 echo "./next-steps.sh          - View this summary again"
 
