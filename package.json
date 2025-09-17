@@ -1,0 +1,12 @@
+{
+  "name": "cloudcurio-stackhub-seed",
+  "version": "1.0.0",
+  "description": "Seed script for CloudCurio StackHub database",
+  "main": "seed-database.js",
+  "scripts": {
+    "seed": "node seed-database.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.0"
+  }
+}

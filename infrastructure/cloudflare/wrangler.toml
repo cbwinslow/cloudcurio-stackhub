@@ -10,6 +10,10 @@ binding = "DB"
 database_name = "stackhub_db"
 database_id = "REPLACE_WITH_YOUR_D1_ID"
 
+[[analytics_engines]]
+binding = "ANALYTICS"
+dataset = "stackhub_analytics"
+
 [kv_namespaces]
 # [[kv_namespaces]]
 # binding = "STACKHUB_KV"
