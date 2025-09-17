@@ -17,22 +17,10 @@ if ! command_exists ssh-keygen; then
     exit 1
 fi
 
-# Remove existing SSH keys (with confirmation)
-if [ -f ~/.ssh/id_ed25519 ] || [ -f ~/.ssh/id_rsa ]; then
-    echo "Existing SSH keys found:"
-    [ -f ~/.ssh/id_ed25519 ] && echo "  - ~/.ssh/id_ed25519"
-    [ -f ~/.ssh/id_rsa ] && echo "  - ~/.ssh/id_rsa"
-    read -p "Do you want to remove them and generate new ones? (y/N): " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo "Removing existing SSH keys..."
-        rm -f ~/.ssh/id_ed25519 ~/.ssh/id_ed25519.pub ~/.ssh/id_rsa ~/.ssh/id_rsa.pub
-        echo "Existing SSH keys removed."
-    else
-        echo "Keeping existing SSH keys. Exiting."
-        exit 0
-    fi
-fi
+# Remove existing SSH keys
+echo "Removing existing SSH keys..."
+rm -f ~/.ssh/id_ed25519 ~/.ssh/id_ed25519.pub ~/.ssh/id_rsa ~/.ssh/id_rsa.pub
+echo "Existing SSH keys removed."
 
 # Generate new SSH key with correct email
 echo "Generating new SSH key with email: blaine.winslow@gmail.com"
