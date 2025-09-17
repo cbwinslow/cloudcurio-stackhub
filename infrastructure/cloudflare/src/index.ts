@@ -1,8 +1,9 @@
-import { D1Database, AnalyticsEngineDataset } from '@cloudflare/workers-types';
+import { D1Database, AnalyticsEngineDataset, KVNamespace } from '@cloudflare/workers-types';
 
 interface Env {
   DB: D1Database;
   ANALYTICS_ENGINE: AnalyticsEngineDataset;
+  STACKHUB_KV: KVNamespace;
 }
 
 interface ScriptItem {
@@ -281,7 +282,30 @@ export default {
 
       // Health check
       if (path === '/api/health' && method === 'GET') {
-        return new Response('OK', { headers: corsHeaders });
+        // Test KV access
+        try {
+          await env.STACKHUB_KV.put('health-check', 'ok', { expirationTtl: 60 });
+          const kvResult = await env.STACKHUB_KV.get('health-check');
+          
+          // Test D1 access
+          const d1Result = await env.DB.prepare('SELECT 1 as test').first();
+          
+          return new Response(JSON.stringify({ 
+            status: 'ok', 
+            kv: kvResult === 'ok' ? 'ok' : 'error',
+            d1: d1Result ? 'ok' : 'error'
+          }), { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          });
+        } catch (error: any) {
+          return new Response(JSON.stringify({ 
+            status: 'error', 
+            message: error.message 
+          }), { 
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          });
+        }
       }
 
       return new Response('Not found', { status: 404, headers: corsHeaders });

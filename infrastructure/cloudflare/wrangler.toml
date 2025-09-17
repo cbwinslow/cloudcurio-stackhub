@@ -8,16 +8,15 @@ compatibility_date = "2024-11-04"
 [[d1_databases]]
 binding = "DB"
 database_name = "stackhub_db"
-database_id = "REPLACE_WITH_YOUR_D1_ID"
+database_id = "d4c72781-6e4e-4379-8b92-5495da7397f1"
 
 [[analytics_engine_datasets]]
 binding = "ANALYTICS_ENGINE"
 dataset = "dt_analytics"
 
-[kv_namespaces]
-# [[kv_namespaces]]
-# binding = "STACKHUB_KV"
-# id = "REPLACE_WITH_KV_ID"
+[[kv_namespaces]]
+binding = "STACKHUB_KV"
+id = "d0ceae6914331452da233cab30b940d5d"
 
 [ai]
 # Optional: if you enable Cloudflare AI/Vectorize later.
