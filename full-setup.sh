@@ -22,20 +22,32 @@ echo "Prerequisites:"
 echo "============="
 echo "1. Cloudflare account with D1 and Analytics Engine enabled"
 echo "2. Wrangler CLI installed: npm install -g wrangler"
-echo "3. Authenticated with Cloudflare: wrangler login"
+echo "3. Authenticated with Cloudflare (see ./wrangler-auth.sh for instructions)"
 echo ""
 read -p "Press Enter to continue (or Ctrl+C to exit)..."
 
 echo ""
-echo "Step 1: Authenticate with Cloudflare"
+echo "Step 1: Check Wrangler Authentication"
 echo "=================================="
-wrangler login
+echo "Checking if Wrangler is authenticated..."
+if npx wrangler whoami >/dev/null 2>&1; then
+    echo "✓ Wrangler is already authenticated"
+else
+    echo "✗ Wrangler is not authenticated"
+    echo ""
+    echo "Please authenticate Wrangler using one of these methods:"
+    echo "1. Run: ./wrangler-auth.sh - for instructions on API token authentication (recommended)"
+    echo "2. Run: npx wrangler login - for interactive authentication (requires browser access)"
+    echo ""
+    echo "After authenticating, run this script again."
+    exit 1
+fi
 
 echo ""
 echo "Step 2: Create D1 Database"
 echo "========================"
 echo "Creating D1 database 'stackhub_db'..."
-wrangler d1 create stackhub_db
+npx wrangler d1 create stackhub_db
 
 echo ""
 echo "Step 3: Get Database ID"
@@ -58,13 +70,13 @@ read -p "Press Enter after updating the wrangler.toml file..."
 echo ""
 echo "Step 5: Apply Database Schema"
 echo "=========================="
-wrangler d1 execute stackhub_db --file=infrastructure/cloudflare/d1/schema.sql --config infrastructure/cloudflare/wrangler.toml
+npx wrangler d1 execute stackhub_db --file=infrastructure/cloudflare/d1/schema.sql --config infrastructure/cloudflare/wrangler.toml
 
 echo ""
 echo "Step 6: Deploy the Worker"
 echo "======================="
 echo "Deploying the API Worker with D1 and Analytics Engine support..."
-wrangler deploy --config infrastructure/cloudflare/wrangler.toml
+npx wrangler deploy --config infrastructure/cloudflare/wrangler.toml
 
 echo ""
 echo "Step 7: Get Worker URL"
