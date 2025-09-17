@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Complete Repository Setup Script
-# This script handles everything from SSH key generation to pushing to both GitHub and GitLab
+# Complete CloudCurio StackHub Setup Script
+# This script guides you through the complete setup process
 
-echo "Complete Repository Setup Script"
-echo "=============================="
+echo "Complete CloudCurio StackHub Setup Script"
+echo "======================================"
 
 # Check if we're in the correct directory
 if [ ! -f "README.md" ]; then
@@ -12,133 +12,140 @@ if [ ! -f "README.md" ]; then
     exit 1
 fi
 
-# Function to check if a command exists
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
-}
+echo "This script will guide you through setting up the complete CloudCurio StackHub with:"
+echo "- Cloudflare D1 database for dynamic data management"
+echo "- Cloudflare Analytics Engine for usage tracking"
+echo "- API Worker for backend functionality"
+echo ""
 
-# Check for required tools
-if ! command_exists git; then
-    echo "Error: Git is not installed. Please install Git and try again."
+echo "Step 1: Verify Authentication"
+echo "============================"
+echo "Checking Wrangler authentication..."
+if export CLOUDFLARE_API_TOKEN=gKob2mQisfZo4JlzOmNct1VR9IEK0rn2rTFM4hH0 && npx wrangler whoami >/dev/null 2>&1; then
+    echo "✓ Authentication successful"
+else
+    echo "✗ Authentication failed"
+    echo "Please check your API token and permissions."
     exit 1
 fi
 
-if ! command_exists ssh-keygen; then
-    echo "Error: ssh-keygen is not available. Please install OpenSSH and try again."
+echo ""
+echo "Step 2: Create D1 Database"
+echo "========================"
+echo "You need to create the D1 database. You have two options:"
+echo ""
+echo "Option 1: Create via Cloudflare Dashboard (Recommended)"
+echo "1. Go to: https://dash.cloudflare.com"
+echo "2. Navigate to Workers & Pages > D1"
+echo "3. Click 'Create database'"
+echo "4. Enter database name: stackhub_db"
+echo "5. Click 'Create'"
+echo "6. Note the database ID from the database details page"
+echo ""
+echo "Option 2: Create via Wrangler (if permissions allow)"
+echo "Run: npx wrangler d1 create stackhub_db"
+echo ""
+read -p "Have you created the D1 database? (y/N): " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "Please create the D1 database first, then run this script again."
     exit 1
 fi
 
-# Generate SSH key if it doesn't exist
-if [ ! -f ~/.ssh/id_rsa ] && [ ! -f ~/.ssh/id_ed25519 ]; then
-    echo "Generating new SSH key..."
-    ssh-keygen -t ed25519 -C "blaine.winslow@gmail.com" -f ~/.ssh/id_ed25519 -N ""
-    echo "SSH key generated successfully!"
+echo ""
+echo "Step 3: Update wrangler.toml"
+echo "=========================="
+read -p "Enter your D1 database ID: " db_id
+
+# Update the wrangler.toml file with the database ID
+sed -i "s/database_id = \"REPLACE_WITH_YOUR_D1_ID\"/database_id = \"$db_id\"/g" infrastructure/cloudflare/wrangler.toml
+
+echo "Updated wrangler.toml with database ID: $db_id"
+
+echo ""
+echo "Step 4: Apply Database Schema"
+echo "=========================="
+echo "Applying the database schema..."
+if export CLOUDFLARE_API_TOKEN=gKob2mQisfZo4JlzOmNct1VR9IEK0rn2rTFM4hH0 && npx wrangler d1 execute stackhub_db --file=infrastructure/cloudflare/d1/schema.sql --config infrastructure/cloudflare/wrangler.toml; then
+    echo "✓ Database schema applied successfully"
 else
-    echo "SSH key already exists."
+    echo "✗ Failed to apply database schema"
+    echo "Please check the database ID and try again."
+    exit 1
 fi
 
-# Start ssh-agent and add SSH key
-echo "Starting ssh-agent and adding SSH key..."
-eval "$(ssh-agent -s)" > /dev/null
-if [ -f ~/.ssh/id_ed25519 ]; then
-    ssh-add ~/.ssh/id_ed25519
+echo ""
+echo "Step 5: Deploy the Worker"
+echo "======================="
+echo "Deploying the API Worker with D1 and Analytics Engine support..."
+if export CLOUDFLARE_API_TOKEN=gKob2mQisfZo4JlzOmNct1VR9IEK0rn2rTFM4hH0 && npx wrangler deploy --config infrastructure/cloudflare/wrangler.toml; then
+    echo "✓ Worker deployed successfully"
 else
-    ssh-add ~/.ssh/id_rsa
+    echo "✗ Failed to deploy Worker"
+    exit 1
 fi
 
-# Ensure SSH key has correct permissions
-chmod 700 ~/.ssh
-chmod 600 ~/.ssh/id_ed25519
-chmod 644 ~/.ssh/id_ed25519.pub
-
-# Display public key for user to add to both GitHub and GitLab
 echo ""
-echo "=== Add this SSH key to your GitHub and GitLab accounts ==="
-echo "GitHub:"
-echo "1. Go to https://github.com/settings/ssh/new"
-echo "2. Title: CloudCurio StackHub Setup"
-echo "3. Copy and paste the key below into the 'Key' field:"
+echo "Step 6: Get Worker URL"
+echo "===================="
+echo "Please note the deployed Worker URL from the output above."
+echo "It will look something like: https://cloudcurio-stackhub-api.YOUR_SUBDOMAIN.workers.dev"
 echo ""
-echo "GitLab:"
-echo "1. Go to https://gitlab.com/-/profile/keys"
-echo "2. Title: CloudCurio StackHub Setup"
-echo "3. Copy and paste the same key below into the 'Key' field:"
+read -p "Enter your deployed Worker URL: " worker_url
+
 echo ""
-if [ -f ~/.ssh/id_ed25519.pub ]; then
-    cat ~/.ssh/id_ed25519.pub
-elif [ -f ~/.ssh/id_rsa.pub ]; then
-    cat ~/.ssh/id_rsa.pub
-fi
+echo "Step 7: Update Environment Variables in Cloudflare Pages"
+echo "====================================================="
+echo "Update your Cloudflare Pages project with these environment variables:"
+echo "1. Go to Cloudflare Dashboard > Pages > cloudcurio-stackhub > Settings > Environment Variables"
+echo "2. Add variable:"
+echo "   - Key: NEXT_PUBLIC_API_URL"
+echo "   - Value: $worker_url"
 echo ""
-echo "============================================================"
-echo ""
-read -p "Press Enter after you've added the SSH key to both GitHub and GitLab..."
-
-# Test SSH connections
-echo "Testing SSH connection to GitHub..."
-ssh -T git@github.com 2>&1 | grep -E "(successfully authenticated|Welcome)" || {
-    echo "GitHub SSH connection test completed. If you see a permission message, that's normal."
-}
-
-echo "Testing SSH connection to GitLab..."
-ssh -T git@gitlab.com 2>&1 | grep -E "(successfully authenticated|Welcome)" || {
-    echo "GitLab SSH connection test completed. If you see a permission message, that's normal."
-}
-
-# Set up git configuration
-echo "Setting up git configuration..."
-git config --global user.name "cbwinslow"
-git config --global user.email "blaine.winslow@gmail.com"
-
-# Initialize repository if not already done
-if [ ! -d ".git" ]; then
-    echo "Initializing git repository..."
-    git init
-    git add .
-    git commit -m "Initial commit: CloudCurio StackHub"
+read -p "Have you updated the environment variables? (y/N): " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "Please update the environment variables, then redeploy your Pages project."
 fi
 
-# Set up remotes
-echo "Setting up GitHub remote..."
-git remote remove origin 2>/dev/null
-git remote add origin git@github.com:cbwinslow/cloudcurio-stackhub.git
-
-echo "Setting up GitLab remote..."
-git remote remove gitlab 2>/dev/null
-git remote add gitlab git@gitlab.com:cbwinslow/cloudcurio-stackhub.git
-
-# Check if branch is named master or main
-BRANCH_NAME="master"
-if git branch | grep -q "main"; then
-    BRANCH_NAME="main"
-fi
-
-# Push to GitHub
-echo "Pushing to GitHub..."
-git push -u origin $BRANCH_NAME
-
-if [ $? -eq 0 ]; then
-    echo "Successfully pushed to GitHub!"
-    echo "Your repository is now available at: https://github.com/cbwinslow/cloudcurio-stackhub"
+echo ""
+echo "Step 8: Install Seed Script Dependencies"
+echo "======================================"
+if npm install; then
+    echo "✓ Dependencies installed successfully"
 else
-    echo "Failed to push to GitHub."
-    echo "Please make sure you've added the SSH key to your GitHub account."
-fi
-
-# Push to GitLab
-echo "Pushing to GitLab..."
-git push -u gitlab $BRANCH_NAME
-
-if [ $? -eq 0 ]; then
-    echo "Successfully pushed to GitLab!"
-    echo "Your repository is now available at: https://gitlab.com/cbwinslow/cloudcurio-stackhub"
-else
-    echo "Failed to push to GitLab."
-    echo "Please make sure you've added the SSH key to your GitLab account."
+    echo "✗ Failed to install dependencies"
+    exit 1
 fi
 
 echo ""
-echo "Setup complete!"
-echo "If you had any issues, you can run the individual scripts:"
-echo "- ./github-setup.sh for GitHub only"
-echo "- ./gitlab-setup.sh for GitLab only"
+echo "Step 9: Seed the Database"
+echo "========================"
+echo "Seeding the database with initial data..."
+if npm run seed; then
+    echo "✓ Database seeded successfully"
+else
+    echo "✗ Failed to seed database"
+    exit 1
+fi
+
+echo ""
+echo "Step 10: Redeploy Cloudflare Pages"
+echo "================================"
+echo "Redeploy your Pages project to use the new API:"
+echo "1. Go to Cloudflare Dashboard > Pages > cloudcurio-stackhub > Deployments"
+echo "2. Click 'Create deployment'"
+echo "3. Select the master branch and deploy"
+echo ""
+read -p "Have you redeployed the Pages project? (y/N): " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "Please redeploy your Pages project to complete the setup."
+fi
+
+echo ""
+echo "Complete setup finished!"
+echo "======================"
+echo "Your application should now be using Cloudflare D1 database and Analytics Engine."
+echo "You can now add, edit, and delete items through the web interface."
+echo "Analytics data is being collected in Cloudflare Analytics Engine."
