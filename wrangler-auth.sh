@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Cloudflare Wrangler Authentication Script
+# This script helps authenticate Wrangler on a remote server
+
+echo "Cloudflare Wrangler Authentication Script"
+echo "======================================"
+
+echo "To authenticate Wrangler on a remote server, you have two options:"
+echo ""
+echo "Option 1: Use API Token (Recommended for remote servers)"
+echo "======================================================"
+echo "1. Go to Cloudflare Dashboard: https://dash.cloudflare.com/profile/api-tokens"
+echo "2. Create a token with these permissions:"
+echo "   - Permissions: Workers Scripts:Edit, Workers KV Storage:Edit, D1:Edit, Analytics Engine:Edit"
+echo "   - Zone Resources: Include:All zones"
+echo "   - Account Resources: Include:All accounts"
+echo "3. Copy the API token"
+echo "4. Set it as an environment variable:"
+echo "   export CLOUDFLARE_API_TOKEN=your-api-token-here"
+echo ""
+echo "Option 2: Use Global API Key (Less secure, but works)"
+echo "===================================================="
+echo "1. Go to Cloudflare Dashboard: https://dash.cloudflare.com/profile/api-tokens"
+echo "2. Scroll down to 'API Keys' section"
+echo "3. View Global API Key"
+echo "4. Copy the key"
+echo "5. Set these environment variables:"
+echo "   export CLOUDFLARE_EMAIL=your-email@example.com"
+echo "   export CLOUDFLARE_API_KEY=your-global-api-key-here"
+echo ""
+echo "After setting the environment variables, test authentication:"
+echo "npx wrangler whoami"
+echo ""
+echo "If you're having trouble with the web-based authentication flow on a remote server,"
+echo "the API token method is recommended as it doesn't require a browser."
