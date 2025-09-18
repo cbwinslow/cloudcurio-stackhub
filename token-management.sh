@@ -11,13 +11,19 @@ echo "======================================================"
 ./create-token-manager.sh
 
 echo ""
-echo "Step 2: Once you have the token manager token, get the permission IDs"
-echo "=================================================================="
+echo "Step 2: Once you have the token manager token, list all tokens to find the deployment token ID"
+echo "========================================================================================"
+echo "Run this command with your token manager token:"
+echo "node list-tokens.js <token-manager-token>"
+
+echo ""
+echo "Step 3: Get the permission IDs"
+echo "=========================="
 echo "Run this command with your token manager token:"
 echo "node get-permission-ids.js <token-manager-token>"
 
 echo ""
-echo "Step 3: Modify your deployment token permissions"
+echo "Step 4: Modify your deployment token permissions"
 echo "============================================="
 echo "Run this command with your token manager token and the deployment token ID:"
 echo "node modify-token.js <token-manager-token> <deployment-token-id>"
